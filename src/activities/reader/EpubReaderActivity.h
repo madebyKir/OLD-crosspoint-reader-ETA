@@ -11,6 +11,10 @@ class EpubReaderActivity final : public ActivityWithSubactivity {
   int currentSpineIndex = 0;
   int nextPageNumber = 0;
   int pagesUntilFullRefresh = 0;
+  unsigned long chapterReadingStartMs = 0;
+  int chapterReadingStartPage = 0;
+  float chapterAveragePageReadMs = 60000.0f;
+  bool hasChapterReadingSamples = false;
   int cachedSpineIndex = 0;
   int cachedChapterTotalPageCount = 0;
   // Signals that the next render should reposition within the newly loaded section
@@ -28,6 +32,8 @@ class EpubReaderActivity final : public ActivityWithSubactivity {
                       int orientedMarginBottom, int orientedMarginLeft);
   void renderStatusBar(int orientedMarginRight, int orientedMarginBottom, int orientedMarginLeft) const;
   void saveProgress(int spineIndex, int currentPage, int pageCount);
+  void resetChapterReadingStats(int currentPage);
+  int estimateMinutesToChapterEnd() const;
   // Jump to a percentage of the book (0-100), mapping it to spine and page.
   void jumpToPercent(int percent);
   void onReaderMenuBack(uint8_t orientation);
