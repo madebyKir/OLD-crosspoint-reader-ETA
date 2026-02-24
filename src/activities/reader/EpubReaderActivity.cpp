@@ -1,6 +1,7 @@
 #include "EpubReaderActivity.h"
 
 #include <Epub/Page.h>
+#include <cmath>
 #include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalStorage.h>
@@ -241,6 +242,8 @@ void EpubReaderActivity::loop() {
   if (prevTriggered) {
     if (section->currentPage > 0) {
       section->currentPage--;
+      // Restart chapter timing when moving backwards, so ETA reflects current reread pace.
+      resetChapterReadingStats(section->currentPage);
     } else if (currentSpineIndex > 0) {
       // We don't want to delete the section mid-render, so grab the semaphore
       {
@@ -254,6 +257,12 @@ void EpubReaderActivity::loop() {
   } else {
     if (section->currentPage < section->pageCount - 1) {
       section->currentPage++;
+      const int pagesRead = section->currentPage - chapterReadingStartPage;
+      const unsigned long elapsedMs = millis() - chapterReadingStartMs;
+      if (pagesRead > 0 && elapsedMs > 0) {
+        chapterAveragePageReadMs = static_cast<float>(elapsedMs) / static_cast<float>(pagesRead);
+        hasChapterReadingSamples = true;
+      }      
     } else {
       // We don't want to delete the section mid-render, so grab the semaphore
       {
@@ -580,6 +589,8 @@ void EpubReaderActivity::render(Activity::RenderLock&& lock) {
       section->currentPage = newPage;
       pendingPercentJump = false;
     }
+
+    resetChapterReadingStats(section->currentPage);
   }
 
   renderer.clearScreen();
@@ -696,12 +707,49 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
   renderer.restoreBwBuffer();
 }
 
+
+void EpubReaderActivity::resetChapterReadingStats(const int currentPage) {
+  chapterReadingStartMs = millis();
+  chapterReadingStartPage = currentPage;
+  chapterAveragePageReadMs = 60000.0f;
+  hasChapterReadingSamples = false;
+}
+
+int EpubReaderActivity::estimateMinutesToChapterEnd() const {
+  if (!section || section->pageCount <= 0) {
+    return 0;
+  }
+
+  if (section->currentPage < chapterReadingStartPage) {
+    return 0;
+  }
+
+  const int remainingPages = section->pageCount - (section->currentPage + 1);
+  if (remainingPages <= 0) {
+    return 0;
+  }
+
+  float msPerPage = chapterAveragePageReadMs;
+  const int pagesRead = section->currentPage - chapterReadingStartPage;
+  const unsigned long elapsedMs = millis() - chapterReadingStartMs;
+  if (pagesRead > 0 && elapsedMs > 0) {
+    msPerPage = static_cast<float>(elapsedMs) / static_cast<float>(pagesRead);
+  } else if (!hasChapterReadingSamples) {
+    msPerPage = 60000.0f;
+  }
+
+  const float remainingMs = static_cast<float>(remainingPages) * msPerPage;
+  return static_cast<int>(ceilf(remainingMs / 60000.0f));
+}
+
 void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const int orientedMarginBottom,
                                          const int orientedMarginLeft) const {
   auto metrics = UITheme::getInstance().getMetrics();
 
   // determine visible status bar elements
   const bool showProgressPercentage = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL;
+  const bool showChapterTimeRemaining =
+      SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showBookProgressBar = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
                                    SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::ONLY_BOOK_PROGRESS_BAR;
   const bool showChapterProgressBar = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR;
@@ -711,11 +759,13 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
   const bool showBattery = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::NO_PROGRESS ||
                            SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL ||
                            SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
-                           SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR;
+                           SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR ||
+                           SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showChapterTitle = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::NO_PROGRESS ||
                                 SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL ||
                                 SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
-                                SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR;
+                                SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR ||
+                                SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showBatteryPercentage =
       SETTINGS.hideBatteryPercentage == CrossPointSettings::HIDE_BATTERY_PERCENTAGE::HIDE_NEVER;
 
@@ -728,7 +778,7 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
   const float sectionChapterProg = static_cast<float>(section->currentPage) / section->pageCount;
   const float bookProgress = epub->calculateProgress(currentSpineIndex, sectionChapterProg) * 100;
 
-  if (showProgressText || showProgressPercentage || showBookPercentage) {
+  if (showProgressText || showProgressPercentage || showBookPercentage || showChapterTimeRemaining) {
     // Right aligned text for progress counter
     char progressStr[32];
 
@@ -736,6 +786,9 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
     if (showProgressPercentage) {
       snprintf(progressStr, sizeof(progressStr), "%d/%d  %.0f%%", section->currentPage + 1, section->pageCount,
                bookProgress);
+    } else if (showChapterTimeRemaining) {
+      const int chapterMinutesRemaining = estimateMinutesToChapterEnd();
+      snprintf(progressStr, sizeof(progressStr), "%dm %.0f%%", chapterMinutesRemaining, bookProgress);
     } else if (showBookPercentage) {
       snprintf(progressStr, sizeof(progressStr), "%.0f%%", bookProgress);
     } else {
