@@ -11,7 +11,6 @@
 #include <cstring>
 #include <vector>
 
-#include "Battery.h"
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
 #include "MappedInputManager.h"
@@ -117,7 +116,7 @@ void HomeActivity::onEnter() {
 
   selectorIndex = 0;
 
-  auto metrics = UITheme::getInstance().getMetrics();
+  const auto& metrics = UITheme::getInstance().getMetrics();
   loadRecentBooks(metrics.homeRecentBooksCount);
 
   // Trigger first update
@@ -213,7 +212,7 @@ void HomeActivity::loop() {
 }
 
 void HomeActivity::render(Activity::RenderLock&&) {
-  auto metrics = UITheme::getInstance().getMetrics();
+  const auto& metrics = UITheme::getInstance().getMetrics();
   const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
 

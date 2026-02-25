@@ -1,6 +1,7 @@
 #include "LyraTheme.h"
 
 #include <GfxRenderer.h>
+#include <HalPowerManager.h>
 #include <HalStorage.h>
 #include <I18n.h>
 #include <Utf8.h>
@@ -9,7 +10,6 @@
 #include <string>
 #include <vector>
 
-#include "Battery.h"
 #include "RecentBooksStore.h"
 #include "components/UITheme.h"
 #include "components/icons/book.h"
@@ -87,7 +87,7 @@ const uint8_t* iconForName(UIIcon icon, int size) {
 
 void LyraTheme::drawBatteryLeft(const GfxRenderer& renderer, Rect rect, const bool showPercentage) const {
   // Left aligned: icon on left, percentage on right (reader mode)
-  const uint16_t percentage = battery.readPercentage();
+  const uint16_t percentage = powerManager.getBatteryPercentage();
   const int y = rect.y + 6;
   const int battWidth = LyraMetrics::values.batteryWidth;
 
@@ -124,7 +124,7 @@ void LyraTheme::drawBatteryLeft(const GfxRenderer& renderer, Rect rect, const bo
 
 void LyraTheme::drawBatteryRight(const GfxRenderer& renderer, Rect rect, const bool showPercentage) const {
   // Right aligned: percentage on left, icon on right (UI headers)
-  const uint16_t percentage = battery.readPercentage();
+  const uint16_t percentage = powerManager.getBatteryPercentage();
   const int y = rect.y + 6;
   const int battWidth = LyraMetrics::values.batteryWidth;
 
@@ -357,7 +357,7 @@ void LyraTheme::drawButtonHints(GfxRenderer& renderer, const char* btn1, const c
     const int x = buttonPositions[i];
     if (labels[i] != nullptr && labels[i][0] != '\0') {
       // Draw the filled background and border for a FULL-sized button
-      renderer.fillRect(x, pageHeight - buttonY, buttonWidth, buttonHeight, false);
+      renderer.fillRoundedRect(x, pageHeight - buttonY, buttonWidth, buttonHeight, cornerRadius, Color::White);
       renderer.drawRoundedRect(x, pageHeight - buttonY, buttonWidth, buttonHeight, 1, cornerRadius, true, true, false,
                                false, true);
       const int textWidth = renderer.getTextWidth(SMALL_FONT_ID, labels[i]);
@@ -365,7 +365,8 @@ void LyraTheme::drawButtonHints(GfxRenderer& renderer, const char* btn1, const c
       renderer.drawText(SMALL_FONT_ID, textX, pageHeight - buttonY + textYOffset, labels[i]);
     } else {
       // Draw the filled background and border for a SMALL-sized button
-      renderer.fillRect(x, pageHeight - smallButtonHeight, buttonWidth, smallButtonHeight, false);
+      renderer.fillRoundedRect(x, pageHeight - smallButtonHeight, buttonWidth, smallButtonHeight, cornerRadius,
+                               Color::White);
       renderer.drawRoundedRect(x, pageHeight - smallButtonHeight, buttonWidth, smallButtonHeight, 1, cornerRadius, true,
                                true, false, false, true);
     }
