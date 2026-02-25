@@ -509,7 +509,6 @@ void TxtReaderActivity::renderStatusBar(const int orientedMarginRight, const int
     int titleWidth = renderer.getTextWidth(SMALL_FONT_ID, title.c_str());
     if (titleWidth > availableTextWidth) {
       title = renderer.truncatedText(SMALL_FONT_ID, title.c_str(), availableTextWidth);
-      titleWidth = renderer.getTextWidth(SMALL_FONT_ID, title.c_str());
     }
 
     GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title);

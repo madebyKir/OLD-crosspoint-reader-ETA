@@ -864,14 +864,9 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
     const int titleMarginLeft = batterySize + 30;
     const int titleMarginRight = progressTextWidth + 30;
 
-    // Attempt to center title on the screen, but if title is too wide then later we will center it within the
-    // available space.
-    int titleMarginLeftAdjusted = std::max(titleMarginLeft, titleMarginRight);
-    int availableTitleSpace = rendererableScreenWidth - 2 * titleMarginLeftAdjusted;
     const int tocIndex = epub->getTocIndexForSpineIndex(currentSpineIndex);
 
     std::string title;
-    int titleWidth;
     if (tocIndex == -1) {
       title = tr(STR_UNNAMED);
     } else {
