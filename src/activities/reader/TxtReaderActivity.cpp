@@ -506,7 +506,7 @@ void TxtReaderActivity::renderStatusBar(const int orientedMarginRight, const int
 
     GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title);
   }
-
+}
   void TxtReaderActivity::saveProgress() const {
     FsFile f;
     if (Storage.openFileForWrite("TRS", txt->getCachePath() + "/progress.bin", f)) {
