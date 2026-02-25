@@ -855,29 +855,22 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
                         showBatteryPercentage);
   }
 
-  if (showChapterTitle) {
-    // Centered chatper title text
-    // Page width minus existing content with 30px padding on each side
-    const int rendererableScreenWidth = renderer.getScreenWidth() - orientedMarginLeft - orientedMarginRight;
+std::string title;
 
-    const int batterySize = showBattery ? (showBatteryPercentage ? 50 : 20) : 0;
-    const int titleMarginLeft = batterySize + 30;
-    const int titleMarginRight = progressTextWidth + 30;
-
+if (showChapterTitle) {
     const int tocIndex = epub->getTocIndexForSpineIndex(currentSpineIndex);
 
-    std::string title;
     if (tocIndex == -1) {
-      title = tr(STR_UNNAMED);
+        title = tr(STR_UNNAMED);
     } else {
-      const auto tocItem = epub->getTocItem(tocIndex);
-      title = tocItem.title;
+        const auto tocItem = epub->getTocItem(tocIndex);
+        title = tocItem.title;
     }
-  } else if (SETTINGS.statusBarTitle == CrossPointSettings::STATUS_BAR_TITLE::BOOK_TITLE) {
-    title = epub->getTitle();
-  } else {
-    title = "";
-  }
 
-  GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title);
+} else if (SETTINGS.statusBarTitle == CrossPointSettings::STATUS_BAR_TITLE::BOOK_TITLE) {
+    title = epub->getTitle();
+} else {
+    title = "";
 }
+
+GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title);
