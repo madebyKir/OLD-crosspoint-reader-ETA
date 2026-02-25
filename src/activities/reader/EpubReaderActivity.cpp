@@ -855,22 +855,22 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
                         showBatteryPercentage);
   }
 
-std::string title;
+  std::string title;
 
-if (showChapterTitle) {
+  if (showChapterTitle) {
     const int tocIndex = epub->getTocIndexForSpineIndex(currentSpineIndex);
 
     if (tocIndex == -1) {
-        title = tr(STR_UNNAMED);
+      title = tr(STR_UNNAMED);
     } else {
-        const auto tocItem = epub->getTocItem(tocIndex);
-        title = tocItem.title;
+      const auto tocItem = epub->getTocItem(tocIndex);
+      title = tocItem.title;
     }
 
-} else if (SETTINGS.statusBarTitle == CrossPointSettings::STATUS_BAR_TITLE::BOOK_TITLE) {
+  } else if (SETTINGS.statusBarTitle == CrossPointSettings::STATUS_BAR_TITLE::BOOK_TITLE) {
     title = epub->getTitle();
-} else {
+  } else {
     title = "";
-}
+  }
 
-GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title);
+  GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title);
