@@ -1,12 +1,13 @@
 #include "EpubReaderActivity.h"
 
 #include <Epub/Page.h>
-#include <cmath>
 #include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalStorage.h>
 #include <I18n.h>
 #include <Logging.h>
+
+#include <cmath>
 
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
@@ -262,7 +263,7 @@ void EpubReaderActivity::loop() {
       if (pagesRead > 0 && elapsedMs > 0) {
         chapterAveragePageReadMs = static_cast<float>(elapsedMs) / static_cast<float>(pagesRead);
         hasChapterReadingSamples = true;
-      }      
+      }
     } else {
       // We don't want to delete the section mid-render, so grab the semaphore
       {
@@ -706,7 +707,6 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
   // restore the bw data
   renderer.restoreBwBuffer();
 }
-
 
 void EpubReaderActivity::resetChapterReadingStats(const int currentPage) {
   chapterReadingStartMs = millis();
