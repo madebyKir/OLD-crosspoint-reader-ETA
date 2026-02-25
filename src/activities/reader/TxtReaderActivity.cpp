@@ -504,168 +504,168 @@ void TxtReaderActivity::renderStatusBar(const int orientedMarginRight, const int
       titleWidth = renderer.getTextWidth(SMALL_FONT_ID, title.c_str());
     }
 
-  GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title);
-}
-
-void TxtReaderActivity::saveProgress() const {
-  FsFile f;
-  if (Storage.openFileForWrite("TRS", txt->getCachePath() + "/progress.bin", f)) {
-    uint8_t data[4];
-    data[0] = currentPage & 0xFF;
-    data[1] = (currentPage >> 8) & 0xFF;
-    data[2] = 0;
-    data[3] = 0;
-    f.write(data, 4);
-    f.close();
+    GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title);
   }
-}
 
-void TxtReaderActivity::loadProgress() {
-  FsFile f;
-  if (Storage.openFileForRead("TRS", txt->getCachePath() + "/progress.bin", f)) {
-    uint8_t data[4];
-    if (f.read(data, 4) == 4) {
-      currentPage = data[0] + (data[1] << 8);
-      if (currentPage >= totalPages) {
-        currentPage = totalPages - 1;
-      }
-      if (currentPage < 0) {
-        currentPage = 0;
-      }
-      LOG_DBG("TRS", "Loaded progress: page %d/%d", currentPage, totalPages);
+  void TxtReaderActivity::saveProgress() const {
+    FsFile f;
+    if (Storage.openFileForWrite("TRS", txt->getCachePath() + "/progress.bin", f)) {
+      uint8_t data[4];
+      data[0] = currentPage & 0xFF;
+      data[1] = (currentPage >> 8) & 0xFF;
+      data[2] = 0;
+      data[3] = 0;
+      f.write(data, 4);
+      f.close();
     }
+  }
+
+  void TxtReaderActivity::loadProgress() {
+    FsFile f;
+    if (Storage.openFileForRead("TRS", txt->getCachePath() + "/progress.bin", f)) {
+      uint8_t data[4];
+      if (f.read(data, 4) == 4) {
+        currentPage = data[0] + (data[1] << 8);
+        if (currentPage >= totalPages) {
+          currentPage = totalPages - 1;
+        }
+        if (currentPage < 0) {
+          currentPage = 0;
+        }
+        LOG_DBG("TRS", "Loaded progress: page %d/%d", currentPage, totalPages);
+      }
+      f.close();
+    }
+  }
+
+  bool TxtReaderActivity::loadPageIndexCache() {
+    // Cache file format (using serialization module):
+    // - uint32_t: magic "TXTI"
+    // - uint8_t: cache version
+    // - uint32_t: file size (to validate cache)
+    // - int32_t: viewport width
+    // - int32_t: lines per page
+    // - int32_t: font ID (to invalidate cache on font change)
+    // - int32_t: screen margin (to invalidate cache on margin change)
+    // - uint8_t: paragraph alignment (to invalidate cache on alignment change)
+    // - uint32_t: total pages count
+    // - N * uint32_t: page offsets
+
+    std::string cachePath = txt->getCachePath() + "/index.bin";
+    FsFile f;
+    if (!Storage.openFileForRead("TRS", cachePath, f)) {
+      LOG_DBG("TRS", "No page index cache found");
+      return false;
+    }
+
+    // Read and validate header using serialization module
+    uint32_t magic;
+    serialization::readPod(f, magic);
+    if (magic != CACHE_MAGIC) {
+      LOG_DBG("TRS", "Cache magic mismatch, rebuilding");
+      f.close();
+      return false;
+    }
+
+    uint8_t version;
+    serialization::readPod(f, version);
+    if (version != CACHE_VERSION) {
+      LOG_DBG("TRS", "Cache version mismatch (%d != %d), rebuilding", version, CACHE_VERSION);
+      f.close();
+      return false;
+    }
+
+    uint32_t fileSize;
+    serialization::readPod(f, fileSize);
+    if (fileSize != txt->getFileSize()) {
+      LOG_DBG("TRS", "Cache file size mismatch, rebuilding");
+      f.close();
+      return false;
+    }
+
+    int32_t cachedWidth;
+    serialization::readPod(f, cachedWidth);
+    if (cachedWidth != viewportWidth) {
+      LOG_DBG("TRS", "Cache viewport width mismatch, rebuilding");
+      f.close();
+      return false;
+    }
+
+    int32_t cachedLines;
+    serialization::readPod(f, cachedLines);
+    if (cachedLines != linesPerPage) {
+      LOG_DBG("TRS", "Cache lines per page mismatch, rebuilding");
+      f.close();
+      return false;
+    }
+
+    int32_t fontId;
+    serialization::readPod(f, fontId);
+    if (fontId != cachedFontId) {
+      LOG_DBG("TRS", "Cache font ID mismatch (%d != %d), rebuilding", fontId, cachedFontId);
+      f.close();
+      return false;
+    }
+
+    int32_t margin;
+    serialization::readPod(f, margin);
+    if (margin != cachedScreenMargin) {
+      LOG_DBG("TRS", "Cache screen margin mismatch, rebuilding");
+      f.close();
+      return false;
+    }
+
+    uint8_t alignment;
+    serialization::readPod(f, alignment);
+    if (alignment != cachedParagraphAlignment) {
+      LOG_DBG("TRS", "Cache paragraph alignment mismatch, rebuilding");
+      f.close();
+      return false;
+    }
+
+    uint32_t numPages;
+    serialization::readPod(f, numPages);
+
+    // Read page offsets
+    pageOffsets.clear();
+    pageOffsets.reserve(numPages);
+
+    for (uint32_t i = 0; i < numPages; i++) {
+      uint32_t offset;
+      serialization::readPod(f, offset);
+      pageOffsets.push_back(offset);
+    }
+
     f.close();
-  }
-}
-
-bool TxtReaderActivity::loadPageIndexCache() {
-  // Cache file format (using serialization module):
-  // - uint32_t: magic "TXTI"
-  // - uint8_t: cache version
-  // - uint32_t: file size (to validate cache)
-  // - int32_t: viewport width
-  // - int32_t: lines per page
-  // - int32_t: font ID (to invalidate cache on font change)
-  // - int32_t: screen margin (to invalidate cache on margin change)
-  // - uint8_t: paragraph alignment (to invalidate cache on alignment change)
-  // - uint32_t: total pages count
-  // - N * uint32_t: page offsets
-
-  std::string cachePath = txt->getCachePath() + "/index.bin";
-  FsFile f;
-  if (!Storage.openFileForRead("TRS", cachePath, f)) {
-    LOG_DBG("TRS", "No page index cache found");
-    return false;
+    totalPages = pageOffsets.size();
+    LOG_DBG("TRS", "Loaded page index cache: %d pages", totalPages);
+    return true;
   }
 
-  // Read and validate header using serialization module
-  uint32_t magic;
-  serialization::readPod(f, magic);
-  if (magic != CACHE_MAGIC) {
-    LOG_DBG("TRS", "Cache magic mismatch, rebuilding");
+  void TxtReaderActivity::savePageIndexCache() const {
+    std::string cachePath = txt->getCachePath() + "/index.bin";
+    FsFile f;
+    if (!Storage.openFileForWrite("TRS", cachePath, f)) {
+      LOG_ERR("TRS", "Failed to save page index cache");
+      return;
+    }
+
+    // Write header using serialization module
+    serialization::writePod(f, CACHE_MAGIC);
+    serialization::writePod(f, CACHE_VERSION);
+    serialization::writePod(f, static_cast<uint32_t>(txt->getFileSize()));
+    serialization::writePod(f, static_cast<int32_t>(viewportWidth));
+    serialization::writePod(f, static_cast<int32_t>(linesPerPage));
+    serialization::writePod(f, static_cast<int32_t>(cachedFontId));
+    serialization::writePod(f, static_cast<int32_t>(cachedScreenMargin));
+    serialization::writePod(f, cachedParagraphAlignment);
+    serialization::writePod(f, static_cast<uint32_t>(pageOffsets.size()));
+
+    // Write page offsets
+    for (size_t offset : pageOffsets) {
+      serialization::writePod(f, static_cast<uint32_t>(offset));
+    }
+
     f.close();
-    return false;
+    LOG_DBG("TRS", "Saved page index cache: %d pages", totalPages);
   }
-
-  uint8_t version;
-  serialization::readPod(f, version);
-  if (version != CACHE_VERSION) {
-    LOG_DBG("TRS", "Cache version mismatch (%d != %d), rebuilding", version, CACHE_VERSION);
-    f.close();
-    return false;
-  }
-
-  uint32_t fileSize;
-  serialization::readPod(f, fileSize);
-  if (fileSize != txt->getFileSize()) {
-    LOG_DBG("TRS", "Cache file size mismatch, rebuilding");
-    f.close();
-    return false;
-  }
-
-  int32_t cachedWidth;
-  serialization::readPod(f, cachedWidth);
-  if (cachedWidth != viewportWidth) {
-    LOG_DBG("TRS", "Cache viewport width mismatch, rebuilding");
-    f.close();
-    return false;
-  }
-
-  int32_t cachedLines;
-  serialization::readPod(f, cachedLines);
-  if (cachedLines != linesPerPage) {
-    LOG_DBG("TRS", "Cache lines per page mismatch, rebuilding");
-    f.close();
-    return false;
-  }
-
-  int32_t fontId;
-  serialization::readPod(f, fontId);
-  if (fontId != cachedFontId) {
-    LOG_DBG("TRS", "Cache font ID mismatch (%d != %d), rebuilding", fontId, cachedFontId);
-    f.close();
-    return false;
-  }
-
-  int32_t margin;
-  serialization::readPod(f, margin);
-  if (margin != cachedScreenMargin) {
-    LOG_DBG("TRS", "Cache screen margin mismatch, rebuilding");
-    f.close();
-    return false;
-  }
-
-  uint8_t alignment;
-  serialization::readPod(f, alignment);
-  if (alignment != cachedParagraphAlignment) {
-    LOG_DBG("TRS", "Cache paragraph alignment mismatch, rebuilding");
-    f.close();
-    return false;
-  }
-
-  uint32_t numPages;
-  serialization::readPod(f, numPages);
-
-  // Read page offsets
-  pageOffsets.clear();
-  pageOffsets.reserve(numPages);
-
-  for (uint32_t i = 0; i < numPages; i++) {
-    uint32_t offset;
-    serialization::readPod(f, offset);
-    pageOffsets.push_back(offset);
-  }
-
-  f.close();
-  totalPages = pageOffsets.size();
-  LOG_DBG("TRS", "Loaded page index cache: %d pages", totalPages);
-  return true;
-}
-
-void TxtReaderActivity::savePageIndexCache() const {
-  std::string cachePath = txt->getCachePath() + "/index.bin";
-  FsFile f;
-  if (!Storage.openFileForWrite("TRS", cachePath, f)) {
-    LOG_ERR("TRS", "Failed to save page index cache");
-    return;
-  }
-
-  // Write header using serialization module
-  serialization::writePod(f, CACHE_MAGIC);
-  serialization::writePod(f, CACHE_VERSION);
-  serialization::writePod(f, static_cast<uint32_t>(txt->getFileSize()));
-  serialization::writePod(f, static_cast<int32_t>(viewportWidth));
-  serialization::writePod(f, static_cast<int32_t>(linesPerPage));
-  serialization::writePod(f, static_cast<int32_t>(cachedFontId));
-  serialization::writePod(f, static_cast<int32_t>(cachedScreenMargin));
-  serialization::writePod(f, cachedParagraphAlignment);
-  serialization::writePod(f, static_cast<uint32_t>(pageOffsets.size()));
-
-  // Write page offsets
-  for (size_t offset : pageOffsets) {
-    serialization::writePod(f, static_cast<uint32_t>(offset));
-  }
-
-  f.close();
-  LOG_DBG("TRS", "Saved page index cache: %d pages", totalPages);
-}
