@@ -716,7 +716,7 @@ void EpubReaderActivity::resetChapterReadingStats(const int currentPage) {
 }
 
 int EpubReaderActivity::estimateMinutesToChapterEnd() const {
-  if (!section || section->pageCount <= 0) {
+  if (!section || section->pageCount == 0) {
     return 0;
   }
 
