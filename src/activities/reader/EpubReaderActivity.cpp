@@ -784,6 +784,8 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
 
   // determine visible status bar elements
   const bool showProgressPercentage = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL;
+  const bool showChapterTimeRemaining =
+      SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showBookProgressBar = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
                                    SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::ONLY_BOOK_PROGRESS_BAR;
   const bool showChapterProgressBar = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR;
@@ -793,11 +795,13 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
   const bool showBattery = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::NO_PROGRESS ||
                            SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL ||
                            SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
-                           SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR;
+                           SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR ||
+                           SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showChapterTitle = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::NO_PROGRESS ||
                                 SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL ||
                                 SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
-                                SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR;
+                                SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR ||
+                                SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showBatteryPercentage =
       SETTINGS.hideBatteryPercentage == CrossPointSettings::HIDE_BATTERY_PERCENTAGE::HIDE_NEVER;
 
@@ -812,7 +816,7 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
   const float sectionChapterProg = (pageCount > 0) ? (static_cast<float>(currentPage) / pageCount) : 0;
   const float bookProgress = epub->calculateProgress(currentSpineIndex, sectionChapterProg) * 100;
 
-  if (showProgressText || showProgressPercentage || showBookPercentage) {
+  if (showProgressText || showProgressPercentage || showBookPercentage || showChapterTimeRemaining) {
     // Right aligned text for progress counter
     char progressStr[32];
 
@@ -820,6 +824,9 @@ void EpubReaderActivity::renderStatusBar(const int orientedMarginRight, const in
     if (showProgressPercentage) {
       snprintf(progressStr, sizeof(progressStr), "%d/%d  %.0f%%", section->currentPage + 1, section->pageCount,
                bookProgress);
+    } else if (showChapterTimeRemaining) {
+      const int chapterMinutesRemaining = estimateMinutesToChapterEnd();
+      snprintf(progressStr, sizeof(progressStr), "%dm %.0f%%", chapterMinutesRemaining, bookProgress);
     } else if (showBookPercentage) {
       snprintf(progressStr, sizeof(progressStr), "%.0f%%", bookProgress);
     } else {
