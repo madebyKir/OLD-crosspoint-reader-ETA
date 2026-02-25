@@ -445,7 +445,7 @@ void TxtReaderActivity::renderStatusBar(const int orientedMarginRight, const int
   const bool showProgressText = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL ||
                                 SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR;
   const bool showBookPercentage = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_PROGRESS_BAR ||
-                                 SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
+                                  SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::CHAPTER_TIME_REMAINING;
   const bool showBattery = SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::NO_PROGRESS ||
                            SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::FULL ||
                            SETTINGS.statusBar == CrossPointSettings::STATUS_BAR_MODE::BOOK_PROGRESS_BAR ||
