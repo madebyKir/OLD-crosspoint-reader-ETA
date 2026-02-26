@@ -60,7 +60,7 @@ void applyReaderOrientation(GfxRenderer& renderer, const uint8_t orientation) {
 }  // namespace
 
 void EpubReaderActivity::onPageTurnForEta() {
-  if (!section || section->pageCount <= 0) {
+  if (!section || section->pageCount == 0) {
     lastPageTurnMs = 0;
     avgMsPerPage = 0.0f;
     lastRenderedPageKey = 0;
@@ -91,7 +91,7 @@ void EpubReaderActivity::onPageTurnForEta() {
 }
 
 int EpubReaderActivity::getEtaMinutesToEndOfChapter() const {
-  if (!section || section->pageCount <= 0) {
+  if (!section || section->pageCount == 0) {
     return -1;
   }
 
