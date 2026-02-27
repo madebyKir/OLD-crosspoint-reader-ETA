@@ -381,28 +381,28 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       startActivityForResult(
           std::make_unique<EpubReaderChapterSelectionActivity>(renderer, mappedInput, epub, path, spineIdx),
           [this](const ActivityResult& result) {
-        if (!result.isCancelled && currentSpineIndex != std::get<ChapterResult>(result.data).spineIndex) {
-          currentSpineIndex = std::get<ChapterResult>(result.data).spineIndex;
-          nextPageNumber = 0;
-          lastPageTurnMs = 0;
-          lastRenderedPageKey = 0;
-          avgMsPerPage = 0.0f;
-          section.reset();
-        }
-        exitActivity();
-        requestUpdate();
+            if (!result.isCancelled && currentSpineIndex != std::get<ChapterResult>(result.data).spineIndex) {
+              currentSpineIndex = std::get<ChapterResult>(result.data).spineIndex;
+              nextPageNumber = 0;
+              lastPageTurnMs = 0;
+              lastRenderedPageKey = 0;
+              avgMsPerPage = 0.0f;
+              section.reset();
+            }
+            exitActivity();
+            requestUpdate();
           },
           [this](const int newSpineIndex, const int newPage) {
-        if (currentSpineIndex != newSpineIndex || (section && section->currentPage != newPage)) {
-          currentSpineIndex = newSpineIndex;
-          nextPageNumber = newPage;
-          lastPageTurnMs = 0;
-          lastRenderedPageKey = 0;
-          avgMsPerPage = 0.0f;
-          section.reset();
-        }
-        exitActivity();
-        requestUpdate();
+            if (currentSpineIndex != newSpineIndex || (section && section->currentPage != newPage)) {
+              currentSpineIndex = newSpineIndex;
+              nextPageNumber = newPage;
+              lastPageTurnMs = 0;
+              lastRenderedPageKey = 0;
+              avgMsPerPage = 0.0f;
+              section.reset();
+            }
+            exitActivity();
+            requestUpdate();
           });
       break;
     }
