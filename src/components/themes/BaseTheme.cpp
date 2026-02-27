@@ -697,6 +697,8 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
 
   // Draw Title
   if (!title.empty()) {
+    // Calculate vertical offset for title positioning
+    const int textYOffset = UITheme::getInstance().getMetrics().statusBarVerticalMargin;
     textY -= textYOffset;
     // Centered chapter title text
     // Page width minus existing content with 30px padding on each side
