@@ -389,21 +389,9 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
               avgMsPerPage = 0.0f;
               section.reset();
             }
-            exitActivity();
-            requestUpdate();
-          },
-          [this](const int newSpineIndex, const int newPage) {
-            if (currentSpineIndex != newSpineIndex || (section && section->currentPage != newPage)) {
-              currentSpineIndex = newSpineIndex;
-              nextPageNumber = newPage;
-              lastPageTurnMs = 0;
-              lastRenderedPageKey = 0;
-              avgMsPerPage = 0.0f;
-              section.reset();
-            }
-            exitActivity();
-            requestUpdate();
-          });
+            this->exitActivity();
+            this->requestUpdate();
+          }),
       break;
     }
     case EpubReaderMenuActivity::MenuAction::FOOTNOTES: {
