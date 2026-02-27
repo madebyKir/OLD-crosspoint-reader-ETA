@@ -403,7 +403,7 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
         }
         exitActivity();
         requestUpdate();
-          }));
+          });
       break;
     }
     case EpubReaderMenuActivity::MenuAction::FOOTNOTES: {
