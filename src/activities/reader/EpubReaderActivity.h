@@ -14,6 +14,8 @@ class EpubReaderActivity final : public Activity {
   int pagesUntilFullRefresh = 0;
   int cachedSpineIndex = 0;
   int cachedChapterTotalPageCount = 0;
+  unsigned long lastPageTurnTime = 0UL;
+  unsigned long pageTurnDuration = 0UL;
   // Signals that the next render should reposition within the newly loaded section
   // based on a cross-book percentage jump.
   bool pendingPercentJump = false;
@@ -26,6 +28,7 @@ class EpubReaderActivity final : public Activity {
   float avgMsPerPage = 0.0f;
   const std::function<void()> onGoBack;
   const std::function<void()> onGoHome;
+  bool automaticPageTurnActive = false;
 
   // Footnote support
   std::vector<FootnoteEntry> currentPageFootnotes;
@@ -47,6 +50,8 @@ class EpubReaderActivity final : public Activity {
   void jumpToPercent(int percent);
   void onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction action);
   void applyOrientation(uint8_t orientation);
+  void toggleAutoPageTurn(uint8_t selectedPageTurnOption);
+  void pageTurn(bool isForwardTurn);
 
   // Footnote navigation
   void navigateToHref(const std::string& href, bool savePosition = false);
