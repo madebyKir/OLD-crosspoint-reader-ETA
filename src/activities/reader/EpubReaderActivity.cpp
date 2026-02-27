@@ -389,10 +389,10 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
               avgMsPerPage = 0.0f;
               section.reset();
             }
-            this->exitActivity();
+            this->finish();
             this->requestUpdate();
-          }),
-          break;
+          });
+      break;
     }
     case EpubReaderMenuActivity::MenuAction::FOOTNOTES: {
       startActivityForResult(std::make_unique<EpubReaderFootnotesActivity>(renderer, mappedInput, currentPageFootnotes),
