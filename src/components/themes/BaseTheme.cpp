@@ -643,16 +643,28 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
       screenHeight - UITheme::getInstance().getStatusBarHeight() - orientedMarginBottom - paddingBottom - 4;
   int progressTextWidth = 0;
 
-  if (SETTINGS.statusBarBookProgressPercentage || SETTINGS.statusBarChapterPageCount) {
+  if (SETTINGS.statusBarBookProgressPercentage || SETTINGS.statusBarChapterPageCount || etaMinutesToChapterEnd >= 0) {
     // Right aligned text for progress counter
-    char progressStr[32];
+    char progressStr[48];
 
     if (SETTINGS.statusBarBookProgressPercentage && SETTINGS.statusBarChapterPageCount) {
       snprintf(progressStr, sizeof(progressStr), "%d/%d  %.0f%%", currentPage, pageCount, bookProgress);
     } else if (SETTINGS.statusBarBookProgressPercentage) {
       snprintf(progressStr, sizeof(progressStr), "%.0f%%", bookProgress);
-    } else {
+    } else if (SETTINGS.statusBarChapterPageCount) {
       snprintf(progressStr, sizeof(progressStr), "%d/%d", currentPage, pageCount);
+    } else {
+      progressStr[0] = '\0';
+    }
+
+    if (etaMinutesToChapterEnd >= 0) {
+      if (progressStr[0] != '\0') {
+        char withEtaStr[48];
+        snprintf(withEtaStr, sizeof(withEtaStr), "%s  %d m", progressStr, etaMinutesToChapterEnd);
+        snprintf(progressStr, sizeof(progressStr), "%s", withEtaStr);
+      } else {
+        snprintf(progressStr, sizeof(progressStr), "%d m", etaMinutesToChapterEnd);
+      }
     }
 
     if (etaMinutesToChapterEnd >= 0) {
