@@ -5,6 +5,7 @@
 
 #include "EpubReaderMenuActivity.h"
 #include "activities/Activity.h"
+#include "util/PageTurnEtaEstimator.h"
 
 class EpubReaderActivity final : public Activity {
   std::shared_ptr<Epub> epub;
@@ -24,6 +25,7 @@ class EpubReaderActivity final : public Activity {
   bool pendingScreenshot = false;
   bool skipNextButtonCheck = false;  // Skip button processing for one frame after subactivity exit
   bool automaticPageTurnActive = false;
+  PageTurnEtaEstimator etaEstimator;
 
   // Footnote support
   std::vector<FootnoteEntry> currentPageFootnotes;
@@ -37,7 +39,7 @@ class EpubReaderActivity final : public Activity {
 
   void renderContents(std::unique_ptr<Page> page, int orientedMarginTop, int orientedMarginRight,
                       int orientedMarginBottom, int orientedMarginLeft);
-  void renderStatusBar() const;
+  void renderStatusBar();
   void saveProgress(int spineIndex, int currentPage, int pageCount);
   // Jump to a percentage of the book (0-100), mapping it to spine and page.
   void jumpToPercent(int percent);

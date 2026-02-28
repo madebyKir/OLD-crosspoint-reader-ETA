@@ -105,6 +105,8 @@ void EpubReaderActivity::onEnter() {
   APP_STATE.saveToFile();
   RECENT_BOOKS.addBook(epub->getPath(), epub->getTitle(), epub->getAuthor(), epub->getThumbBmpPath());
 
+  etaEstimator.reset();
+
   // Trigger first update
   requestUpdate();
 }
@@ -115,6 +117,7 @@ void EpubReaderActivity::onExit() {
   // Reset orientation back to portrait for the rest of the UI
   renderer.setOrientation(GfxRenderer::Orientation::Portrait);
 
+  etaEstimator.reset();
   APP_STATE.readerActivityLoadCount = 0;
   APP_STATE.saveToFile();
   section.reset();
@@ -741,7 +744,7 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
   renderer.restoreBwBuffer();
 }
 
-void EpubReaderActivity::renderStatusBar() const {
+void EpubReaderActivity::renderStatusBar() {
   // Calculate progress in book
   const int currentPage = section->currentPage + 1;
   const float pageCount = section->pageCount;
@@ -775,7 +778,11 @@ void EpubReaderActivity::renderStatusBar() const {
     title = epub->getTitle();
   }
 
-  GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, 0, textYOffset);
+  etaEstimator.onPageRendered(currentSpineIndex, section->currentPage, millis());
+  const int remainingPagesInChapter = section->pageCount - currentPage;
+  const int etaMinutes = etaEstimator.estimateMinutesToEnd(remainingPagesInChapter);
+
+  GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, 0, textYOffset, etaMinutes);
 }
 
 void EpubReaderActivity::navigateToHref(const std::string& hrefStr, const bool savePosition) {

@@ -56,6 +56,8 @@ void TxtReaderActivity::onEnter() {
   APP_STATE.saveToFile();
   RECENT_BOOKS.addBook(filePath, fileName, "", "");
 
+  etaEstimator.reset();
+
   // Trigger first update
   requestUpdate();
 }
@@ -66,6 +68,7 @@ void TxtReaderActivity::onExit() {
   // Reset orientation back to portrait for the rest of the UI
   renderer.setOrientation(GfxRenderer::Orientation::Portrait);
 
+  etaEstimator.reset();
   pageOffsets.clear();
   currentPageLines.clear();
   APP_STATE.readerActivityLoadCount = 0;
@@ -156,6 +159,7 @@ void TxtReaderActivity::initializeReader() {
 }
 
 void TxtReaderActivity::buildPageIndex() {
+  etaEstimator.reset();
   pageOffsets.clear();
   pageOffsets.push_back(0);  // First page starts at offset 0
 
@@ -429,13 +433,17 @@ void TxtReaderActivity::renderPage() {
   }
 }
 
-void TxtReaderActivity::renderStatusBar() const {
+void TxtReaderActivity::renderStatusBar() {
   const float progress = totalPages > 0 ? (currentPage + 1) * 100.0f / totalPages : 0;
   std::string title;
   if (SETTINGS.statusBarTitle != CrossPointSettings::STATUS_BAR_TITLE::HIDE_TITLE) {
     title = txt->getTitle();
   }
-  GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title);
+  etaEstimator.onPageRendered(0, currentPage, millis());
+  const int remainingPagesInChapter = totalPages - (currentPage + 1);
+  const int etaMinutes = etaEstimator.estimateMinutesToEnd(remainingPagesInChapter);
+
+  GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title, 0, 0, etaMinutes);
 }
 
 void TxtReaderActivity::saveProgress() const {
@@ -558,6 +566,7 @@ bool TxtReaderActivity::loadPageIndexCache() {
   serialization::readPod(f, numPages);
 
   // Read page offsets
+  etaEstimator.reset();
   pageOffsets.clear();
   pageOffsets.reserve(numPages);
 

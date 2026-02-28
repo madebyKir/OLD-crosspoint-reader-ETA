@@ -630,7 +630,7 @@ void BaseTheme::fillPopupProgress(const GfxRenderer& renderer, const Rect& layou
 
 void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, const int currentPage,
                               const int pageCount, std::string title, const int paddingBottom,
-                              const int textYOffset) const {
+                              const int textYOffset, const int etaMinutes) const {
   auto metrics = UITheme::getInstance().getMetrics();
   int orientedMarginTop, orientedMarginRight, orientedMarginBottom, orientedMarginLeft;
   renderer.getOrientedViewableTRBL(&orientedMarginTop, &orientedMarginRight, &orientedMarginBottom,
@@ -641,10 +641,10 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
   auto textY = screenHeight - UITheme::getInstance().getStatusBarHeight() - orientedMarginBottom - paddingBottom - 4;
   int progressTextWidth = 0;
 
-  if (SETTINGS.statusBarBookProgressPercentage || SETTINGS.statusBarChapterPageCount) {
-    // Right aligned text for progress counter
-    char progressStr[32];
+  char progressStr[48];
+  progressStr[0] = '\0';
 
+  if (SETTINGS.statusBarBookProgressPercentage || SETTINGS.statusBarChapterPageCount) {
     if (SETTINGS.statusBarBookProgressPercentage && SETTINGS.statusBarChapterPageCount) {
       snprintf(progressStr, sizeof(progressStr), "%d/%d  %.0f%%", currentPage, pageCount, bookProgress);
     } else if (SETTINGS.statusBarBookProgressPercentage) {
@@ -652,12 +652,30 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     } else {
       snprintf(progressStr, sizeof(progressStr), "%d/%d", currentPage, pageCount);
     }
+  }
 
-    progressTextWidth = renderer.getTextWidth(SMALL_FONT_ID, progressStr);
+  char etaStr[16];
+  etaStr[0] = '\0';
+  if (etaMinutes >= 0) {
+    snprintf(etaStr, sizeof(etaStr), "%d m", etaMinutes);
+  }
+
+  char rightText[64];
+  rightText[0] = '\0';
+  if (etaStr[0] != '\0' && progressStr[0] != '\0') {
+    snprintf(rightText, sizeof(rightText), "%s  %s", etaStr, progressStr);
+  } else if (etaStr[0] != '\0') {
+    snprintf(rightText, sizeof(rightText), "%s", etaStr);
+  } else if (progressStr[0] != '\0') {
+    snprintf(rightText, sizeof(rightText), "%s", progressStr);
+  }
+
+  if (rightText[0] != '\0') {
+    progressTextWidth = renderer.getTextWidth(SMALL_FONT_ID, rightText);
     renderer.drawText(
         SMALL_FONT_ID,
         renderer.getScreenWidth() - metrics.statusBarHorizontalMargin - orientedMarginRight - progressTextWidth, textY,
-        progressStr);
+        rightText);
   }
 
   // Draw Progress Bar
