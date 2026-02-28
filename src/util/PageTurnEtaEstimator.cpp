@@ -41,8 +41,8 @@ void PageTurnEtaEstimator::onPageRendered(const int sectionIndex, const int page
     emaPageTurnIntervalMs = static_cast<float>(intervalMs);
     emaInitialized = true;
   } else {
-    emaPageTurnIntervalMs = (smoothingFactor * static_cast<float>(intervalMs)) +
-                            ((1.0f - smoothingFactor) * emaPageTurnIntervalMs);
+    emaPageTurnIntervalMs =
+        (smoothingFactor * static_cast<float>(intervalMs)) + ((1.0f - smoothingFactor) * emaPageTurnIntervalMs);
   }
 
   validTurnCount++;
@@ -62,4 +62,3 @@ int PageTurnEtaEstimator::estimateMinutesToEnd(const int remainingPages) const {
   const int minutes = static_cast<int>(std::ceil(etaMs / (60.0f * 1000.0f)));
   return minutes < 0 ? 0 : minutes;
 }
-

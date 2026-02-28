@@ -25,4 +25,3 @@ class PageTurnEtaEstimator {
   int validTurnCount = 0;
   float smoothingFactor = DEFAULT_ALPHA;
 };
-
