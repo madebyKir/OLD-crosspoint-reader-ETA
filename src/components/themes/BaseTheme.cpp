@@ -686,7 +686,7 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
                              metrics.batteryHeight},
                         showBatteryPercentage);
   }
-  
+
   int etaTextWidth = 0;
   const int batterySize = SETTINGS.statusBarBattery ? (showBatteryPercentage ? 50 : 20) : 0;
   if (!etaText.empty()) {
@@ -694,7 +694,7 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     etaTextWidth = renderer.getTextWidth(SMALL_FONT_ID, etaText.c_str());
     renderer.drawText(SMALL_FONT_ID, etaTextX, textY, etaText.c_str());
   }
-  
+
   // Draw Title
   if (!title.empty()) {
     textY -= textYOffset;
