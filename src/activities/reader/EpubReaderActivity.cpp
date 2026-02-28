@@ -741,7 +741,7 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
   renderer.restoreBwBuffer();
 }
 
-void EpubReaderActivity::renderStatusBar() const {
+void EpubReaderActivity::renderStatusBar() {
   // Calculate progress in book
   const int currentPage = section->currentPage + 1;
   const float pageCount = section->pageCount;
@@ -775,7 +775,14 @@ void EpubReaderActivity::renderStatusBar() const {
     title = epub->getTitle();
   }
 
-  GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, 0, textYOffset);
+  const int remainingPages = std::max(0, section->pageCount - currentPage);
+  std::string etaText;
+  if (SETTINGS.statusBarEta) {
+    const auto etaMinutes = etaTracker.updateAndGetMinutes(currentSpineIndex, section->currentPage, remainingPages);
+    etaText = etaMinutes ? (std::to_string(*etaMinutes) + " m") : "";
+  }
+
+  GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, etaText, 0, textYOffset);
 }
 
 void EpubReaderActivity::navigateToHref(const std::string& hrefStr, const bool savePosition) {
