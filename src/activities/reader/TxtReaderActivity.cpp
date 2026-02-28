@@ -436,8 +436,11 @@ void TxtReaderActivity::renderStatusBar() {
     title = txt->getTitle();
   }
   const int remainingPages = std::max(0, totalPages - (currentPage + 1));
-  const auto etaMinutes = etaTracker.updateAndGetMinutes(0, currentPage, remainingPages);
-  const std::string etaText = etaMinutes ? (std::to_string(*etaMinutes) + " m") : "";
+  std::string etaText;
+  if (SETTINGS.statusBarEta) {
+    const auto etaMinutes = etaTracker.updateAndGetMinutes(0, currentPage, remainingPages);
+    etaText = etaMinutes ? (std::to_string(*etaMinutes) + " m") : "";
+  }
 
   GUI.drawStatusBar(renderer, progress, currentPage + 1, totalPages, title, etaText);
 }

@@ -776,8 +776,11 @@ void EpubReaderActivity::renderStatusBar() {
   }
 
   const int remainingPages = std::max(0, section->pageCount - currentPage);
-  const auto etaMinutes = etaTracker.updateAndGetMinutes(currentSpineIndex, section->currentPage, remainingPages);
-  const std::string etaText = etaMinutes ? (std::to_string(*etaMinutes) + " m") : "";
+  std::string etaText;
+  if (SETTINGS.statusBarEta) {
+    const auto etaMinutes = etaTracker.updateAndGetMinutes(currentSpineIndex, section->currentPage, remainingPages);
+    etaText = etaMinutes ? (std::to_string(*etaMinutes) + " m") : "";
+  }
 
   GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, etaText, 0, textYOffset);
 }
