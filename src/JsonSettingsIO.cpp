@@ -130,6 +130,7 @@ bool JsonSettingsIO::saveSettings(const CrossPointSettings& s, const char* path)
   doc["statusBarProgressBar"] = s.statusBarProgressBar;
   doc["statusBarTitle"] = s.statusBarTitle;
   doc["statusBarBattery"] = s.statusBarBattery;
+  doc["statusBarEta"] = s.statusBarEta;
   doc["statusBarProgressBarThickness"] = s.statusBarProgressBarThickness;
 
   String json;
@@ -211,8 +212,10 @@ bool JsonSettingsIO::loadSettings(CrossPointSettings& s, const char* json, bool*
     s.statusBarProgressBar = doc["statusBarProgressBar"];
     s.statusBarTitle = doc["statusBarTitle"];
     s.statusBarBattery = doc["statusBarBattery"];
+    s.statusBarEta = doc["statusBarEta"] | (uint8_t)1;
   } else {
     applyLegacyStatusBarSettings(s);
+    s.statusBarEta = 1;
   }
 
   s.statusBarProgressBarThickness = doc["statusBarProgressBarThickness"] | (uint8_t)S::PROGRESS_BAR_NORMAL;
